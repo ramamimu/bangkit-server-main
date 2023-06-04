@@ -38,7 +38,7 @@ app.get("/logged", (req, res) => {
   }
 });
 
-app.get("/", (req, res) => res.send("Hello Rama!"));
+app.get("/", (req, res) => res.send("Hello Thariq!"));
 
 // Logout route
 app.get("/logout", (req, res) => {
