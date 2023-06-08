@@ -1,8 +1,12 @@
 const cors = require("cors");
 const express = require("express");
 const session = require("express-session");
+const { nanoid } = require("nanoid");
+const axios = require("axios");
+
 const app = express();
 const port = process.env.PORT || 8080;
+
 // Middleware for cors
 app.use(cors());
 // Middleware to parse request body
@@ -18,21 +22,75 @@ app.use(
 );
 
 // Login route
-app.post("/login", (req, res) => {
-  const { username, password } = req.body;
+app.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-  if (username === "test" && password === "123") {
-    req.session.user = { username };
-    res.send("Login successful!");
-  } else {
-    res.status(401).send("Invalid credentials");
+    const query = `SELECT * FROM User WHERE Email = '${email}' AND Password = '${password}'`;
+
+    // Make a request to the SQL database endpoint
+    const response = await axios.post(
+      "https://sql-server-oislxufxaa-et.a.run.app/api/query",
+      { query }
+    );
+    const userData = response.data;
+
+    if (!email || !password) {
+      res.status(400).json({ message: "Email and password are required" });
+      return;
+    } else {
+      // Successful login
+      if (userData.data.length > 0) {
+        // Set user data in the session
+        req.session.userData = { email };
+        res.status(200).json({ message: "Login successful", data: userData });
+      } else {
+        // Invalid credentials
+        res.status(401).json({ message: "Invalid credentials" });
+      }
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.post("/register", async (req, res) => {
+  try {
+    const userId = nanoid(16);
+    const { fullName, email, password } = req.body;
+
+    const query = `INSERT INTO User (User_ID, FullName, Email, Password) VALUES ('${userId}', '${fullName}', '${email}', '${password}')`;
+
+    // Make a request to the SQL database endpoint
+    const response = await axios.post(
+      "https://sql-server-oislxufxaa-et.a.run.app/api/query",
+      { query }
+    );
+    const userData = response.data;
+
+    if (!fullName || !email || !password) {
+      res.status(400).json({ message: "One of the field are empty" });
+      return;
+    } else {
+      if (userData) {
+        res.status(200).json({ message: "User registered successfully" });
+      } else {
+        res
+          .status(500)
+          .json({ message: "Failed to register user", data: userData });
+      }
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
 // If user successfully login
 app.get("/logged", (req, res) => {
-  if (req.session.user) {
-    res.send(`Welcome, ${req.session.user.username}!`);
+  if (req.session.userData) {
+    res.send(`Welcome, ${req.session.userData.email}!`);
   } else {
     res.status(401).send("Unauthorized");
   }
