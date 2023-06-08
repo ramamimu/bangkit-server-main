@@ -2,7 +2,6 @@ const cors = require("cors");
 const express = require("express");
 const session = require("express-session");
 const { nanoid } = require("nanoid");
-const mysql = require("mysql");
 const axios = require("axios");
 
 const app = express();
@@ -12,21 +11,6 @@ const port = process.env.PORT || 8080;
 app.use(cors());
 // Middleware to parse request body
 app.use(express.urlencoded({ extended: true }));
-
-const connection = mysql.createConnection({
-  host: "34.101.45.56",
-  user: "root",
-  password: "=Ddnt5s~l07=6M9O",
-  database: "C23-PR513_CapstoneBangkit",
-});
-
-connection.connect((err) => {
-  if (err) {
-    console.error("Error connecting to MySQL database:", err);
-    return;
-  }
-  console.log("Connected to MySQL database");
-});
 
 // Middleware for session management
 app.use(
