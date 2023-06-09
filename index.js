@@ -1,8 +1,8 @@
 const cors = require("cors");
 const express = require("express");
 const session = require("express-session");
-const { nanoid } = require("nanoid");
 const axios = require("axios");
+require("dotenv").config();
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -15,7 +15,7 @@ app.use(express.urlencoded({ extended: true }));
 // Middleware for session management
 app.use(
   session({
-    secret: "test-key",
+    secret: process.env.SECRET,
     resave: false,
     saveUninitialized: false,
   })
@@ -26,64 +26,64 @@ app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const query = `SELECT * FROM User WHERE Email = '${email}' AND Password = '${password}'`;
+    if (!email || !password) {
+      res.status(400).json(writeError("Email and password are required"));
+      return;
+    }
 
     // Make a request to the SQL database endpoint
     const response = await axios.post(
-      "https://sql-server-oislxufxaa-et.a.run.app/api/query",
-      { query }
-    );
-    const userData = response.data;
-
-    if (!email || !password) {
-      res.status(400).json({ message: "Email and password are required" });
-      return;
-    } else {
-      // Successful login
-      if (userData.data.length > 0) {
-        // Set user data in the session
-        req.session.userData = { email };
-        res.status(200).json({ message: "Login successful", data: userData });
-      } else {
-        // Invalid credentials
-        res.status(401).json({ message: "Invalid credentials" });
+      "https://sql-server-oislxufxaa-et.a.run.app/api/auth/login",
+      {
+        email,
+        password,
       }
+    );
+
+    // Successful login
+    if (!response.data.error) {
+      // Set user data in the session
+      req.session.userData = { email };
+      res.status(200).json({ ...response.data, message: "Login successful" });
+    } else {
+      // Invalid credentials
+      res.status(401).json(writeError("Invalid credentials"));
     }
   } catch (error) {
-    console.error("Error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("Error login:", error.message);
+    res.status(500).json(writeError("Internal server error"));
   }
 });
 
 app.post("/register", async (req, res) => {
   try {
-    const userId = nanoid(16);
-    const { fullName, email, password } = req.body;
+    const { fullname, email, password } = req.body;
 
-    const query = `INSERT INTO User (User_ID, FullName, Email, Password) VALUES ('${userId}', '${fullName}', '${email}', '${password}')`;
+    if (!fullname || !email || !password) {
+      res.status(400).json(writeError("One of the field are empty"));
+      return;
+    }
 
     // Make a request to the SQL database endpoint
     const response = await axios.post(
-      "https://sql-server-oislxufxaa-et.a.run.app/api/query",
-      { query }
-    );
-    const userData = response.data;
-
-    if (!fullName || !email || !password) {
-      res.status(400).json({ message: "One of the field are empty" });
-      return;
-    } else {
-      if (userData) {
-        res.status(200).json({ message: "User registered successfully" });
-      } else {
-        res
-          .status(500)
-          .json({ message: "Failed to register user", data: userData });
+      "https://sql-server-oislxufxaa-et.a.run.app/api/auth/register",
+      {
+        email,
+        password,
+        fullname,
       }
+    );
+
+    if (response.data.error) {
+      res.status(500).json(writeError(response.data.message));
+    } else {
+      res
+        .status(200)
+        .json({ error: false, message: "User registered successfully" });
     }
   } catch (error) {
-    console.error("Error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("Error register:", error.message);
+    res.status(500).json(writeError("Internal server error"));
   }
 });
 
@@ -96,7 +96,7 @@ app.get("/logged", (req, res) => {
   }
 });
 
-app.get("/", (req, res) => res.send("Hello Thariq!"));
+app.get("/", (req, res) => res.send("Hello Folks!"));
 
 // Logout route
 app.get("/logout", (req, res) => {
@@ -108,3 +108,14 @@ app.get("/logout", (req, res) => {
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
+
+// ================ //
+// LOGICAL FUNCTION //
+// ================ //
+
+const writeError = (message) => {
+  return {
+    error: true,
+    message,
+  };
+};
