@@ -27,7 +27,7 @@ app.post("/login", async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      res.status(400).json(writeError("Email and password are required"));
+      res.status(400).json(writeError(true, "Email and password are required"));
       return;
     }
 
@@ -47,11 +47,11 @@ app.post("/login", async (req, res) => {
       res.status(200).json({ ...response.data, message: "Login successful" });
     } else {
       // Invalid credentials
-      res.status(401).json(writeError("Invalid credentials"));
+      res.status(401).json(writeError(true, "Invalid credentials"));
     }
   } catch (error) {
     console.error("Error login:", error.message);
-    res.status(500).json(writeError("Internal server error"));
+    res.status(500).json(writeError(true, "Internal server error"));
   }
 });
 
@@ -60,7 +60,7 @@ app.post("/register", async (req, res) => {
     const { fullname, email, password } = req.body;
 
     if (!fullname || !email || !password) {
-      res.status(400).json(writeError("One of the field are empty"));
+      res.status(400).json(writeError(true, "One of the field are empty"));
       return;
     }
 
@@ -75,24 +75,22 @@ app.post("/register", async (req, res) => {
     );
 
     if (response.data.error) {
-      res.status(500).json(writeError(response.data.message));
+      res.status(500).json(writeError(true, response.data.message));
     } else {
-      res
-        .status(200)
-        .json({ error: false, message: "User registered successfully" });
+      res.status(200).json(writeError(false, "User registered successfully"));
     }
   } catch (error) {
     console.error("Error register:", error.message);
-    res.status(500).json(writeError("Internal server error"));
+    res.status(500).json(writeError(true, "Internal server error"));
   }
 });
 
 // If user successfully login
 app.get("/logged", (req, res) => {
   if (req.session.userData) {
-    res.send(`Welcome, ${req.session.userData.email}!`);
+    res.send(writeError(false, `Welcome, ${req.session.userData.email}!`));
   } else {
-    res.status(401).send("Unauthorized");
+    res.status(401).send(writeError(true, "Unauthorized"));
   }
 });
 
@@ -101,7 +99,7 @@ app.get("/", (req, res) => res.send("Hello Folks!"));
 // Logout route
 app.get("/logout", (req, res) => {
   req.session.destroy();
-  res.send("Logout successful!");
+  res.send(writeError(false, "Logout successful!"));
 });
 
 // Start the server
@@ -113,9 +111,9 @@ app.listen(port, () => {
 // LOGICAL FUNCTION //
 // ================ //
 
-const writeError = (message) => {
+const writeError = (error, message) => {
   return {
-    error: true,
+    error,
     message,
   };
 };
