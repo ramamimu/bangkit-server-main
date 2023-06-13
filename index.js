@@ -102,6 +102,34 @@ app.get("/logout", (req, res) => {
   res.send(writeError(false, "Logout successful!"));
 });
 
+app.get("/api/recomendation-place", async (req, res) => {
+  // get params from request
+  const { key } = req.query;
+  try {
+    const response = await axios.get(
+      `https://sql-server-oislxufxaa-et.a.run.app/api/recomendation-place/?key=${key}`
+    );
+    res.status(200).json(response.data);
+  } catch (error) {
+    console.error("Error recomendation place:", error.message);
+    res.status(500).json(writeError(true, "Internal server error"));
+  }
+});
+
+app.get("/api/detail-place/:id", async (req, res) => {
+  // get params from request
+  const { id } = req.params;
+  try {
+    const response = await axios.get(
+      `https://sql-server-oislxufxaa-et.a.run.app/api/detail-place/${id}`
+    );
+    res.status(200).json(response.data);
+  } catch (error) {
+    console.error("Error detail place:", error.message);
+    res.status(500).json(writeError(true, "Internal server error"));
+  }
+});
+
 // Start the server
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
