@@ -1,4 +1,16 @@
-## Documentation
+## Documentations
+
+### Infrastructure
+
+![cloud](./doc/cloud.png)
+
+Our infrastructure is divided into two core servers using Cloud Run. The first server, referred to as the main server, handles authentication and serves as the gateway for communication with the Android application. The second server is the SQL server, which manages the logical API for maps and is connected to MySQL.
+
+In addition, we have a side server set up as a virtual machine (VM) that utilizes Redis for caching purposes. This caching server helps improve performance and efficiency by storing frequently accessed data. Furthermore, we have reserved an IP address for the static endpoint in the Redis server, ensuring a consistent and reliable connection.
+
+Overall, this infrastructure setup allows for secure authentication, efficient communication with the Android application, optimized data retrieval through caching, and seamless integration with the MySQL database.
+
+## Documentation API
 
 ### _error_
 
@@ -12,7 +24,6 @@ Each response always contains error information in `error` variable. If `error` 
   }
   ```
 
-<br/>
 <br/>
 
 ## Authentication
